@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<string.h>
+#include<ctype.h>
 #define WORD_MAXLEN 50
 
 struct wordinfo
@@ -68,4 +69,42 @@ void wordJob(char word[]){
 int main(int argc, char** argv) //argc是单词数目，argv是单词列 
 {
 	test(argc,argv);
+}
+
+/*******
+ * 从stdin中读入一个单词，转换成小写字母后，保存到目标地址中，
+ * 会跳过除了\f以外的所有非字母字符，读到的单词从遇到的第一个
+ * 字母字符开始，一直到遇到第一个非字母单词结束。读到\f后会放
+ * 回stdin中。
+ * 
+ * @param dest 函数会把单词[转为小写字母后]放到该目标数组中
+ * 
+ * @return 返回值非负时，为读到的单词长度。
+ * 		   为-1时，代表已经读到了文件末尾
+ *******/
+
+int readWord(char dest[])
+{
+    int size = 0;
+    char c;
+
+    while ((c = getchar()) && c != EOF && !isalpha(c) && c != '\f')
+        ; // 跳过非字母的字符
+
+    if (c == EOF)
+        return -1;
+    else if (c == '\f') {
+        ungetc(c, stdin);
+        return 0;
+    }
+
+    dest[size++] = tolower(c);
+    while ((c = getchar()) && isalpha(c))
+        dest[size++] = tolower(c);
+    dest[size] = '\0';
+
+    if (c == '\f')
+        ungetc(c, stdin);
+
+    return size;
 }
