@@ -4,10 +4,10 @@
 #include<stdlib.h> 
 #include<math.h> 
 
-#define WORD_MAXLEN 50 //最大单词长度 
-#define k_MAX 20 //最大关键词个数 
+#define WORD_MAXLEN 200 //最大单词长度 
+#define k_MAX 200 //最大关键词个数 
 #define article_MAX 2000 //最大文章/网页个数 
-#define id_MAX 10 //最大标识号长度 
+#define id_MAX 100 //最大标识号长度 
 
 struct TN //记录单词k在文章d的频数，k与d体现在数组编号中 
 {
@@ -41,7 +41,9 @@ bool check(char word[]);
 void article_analyse();//分析文本，结果会直接保存在全局变量中 
 int find_str(char strs[][WORD_MAXLEN], char *str, int len);
 bool check(char word[]);
-void print_func();
+void print_res();
+void show_info(struct ArticleInfo a);
+int cmp(const void* a,const void* b);
 
 int main(int argc, char** argv) //argc是单词数目，argv是单词列 
 {
@@ -50,13 +52,9 @@ int main(int argc, char** argv) //argc是单词数目，argv是单词列
 	/***读入字典与停止词***/
 	readDictStop();
 	
-//	char t[10]="abaction";
-//	printf("%d\n",check(t));
-//	printf("%d\n",find_str(dict,t,418667));
-	
 	/***获取参数***/ 
 	// 100 edu news article abcdefgh //样例
-	// 5 edu news article //自制 
+	// 5 edu news article //测试用 
 	m=0; //有效关键词个数 
 	int k;
 	for(k=2;k<argc;k++) 
@@ -67,10 +65,14 @@ int main(int argc, char** argv) //argc是单词数目，argv是单词列
 	}
 		//以上结束后，m是关键词个数 
 	res_n = atoi(argv[1]); //需要显示的结果条目数 
-	//printf("%d,%d",m,k);
+	
+	/*===========【在此设置输入】=========*/
+	//freopen("article.txt","r",stdin); //原样例 
+	freopen("testarticle.txt","r",stdin); //复制样例 
+	/*===========【在此设置输入】=========*/
+	
 	
 	/***读入article，并逐字符分析***/
-	freopen("testarticle.txt","r",stdin); //设置输入流 
 	article_analyse(); //分析得出所需的值 
 	
 	/***计算结果***/
@@ -91,8 +93,9 @@ int main(int argc, char** argv) //argc是单词数目，argv是单词列
 	}
 
 	/***输出结果***/ 
-		//此处应有排序
-	print_func(); 
+	int sz=sizeof(article)/sizeof(article[0]);
+	qsort(article,N,sizeof(article[0]),cmp);
+	print_res(); 
 	
 	return 0; 
 }
@@ -159,13 +162,34 @@ int find_str(char strs[][WORD_MAXLEN], char *str, int len)
     return i; //找到了，返回索引 
 }
 
+//字符串列表中查找字符串-二分查找 
+int find_str2(char strs[][WORD_MAXLEN], char *str, int len)
+{
+	int left = 0;//左下标
+	int right = len - 1;//右下标
+	
+	while (left <= right)
+	{
+		int mid = left + (right - left) / 2;
+		//不建议计算mid时用(left + right) / 2，这样有可能越界
+		if(strcmp(strs[mid],str) < 0)
+			left = mid + 1;
+		else if (strcmp(strs[mid],str) > 0)
+			right = mid - 1;
+		else
+			return mid;
+	}
+	if (left > right)
+		return -1; //没找到 
+}
+
 
 //检查某个单词word是否有意义，如果有意义返回ture，否则false 
 bool check(char word[])
 {
-	if(find_str(stop,word,320)>=0)
+	if(find_str2(stop,word,320)>=0)
 		return false;
-	else if(find_str(dict,word,418667)>=0)
+	else if(find_str2(dict,word,418667)>=0)
 		return true;
 	else 
 		return false;
@@ -221,36 +245,37 @@ void article_analyse()
 	int i;
 	while(1) //持续读取文章 
 	{
-		//printf("文章%d\n",idx); 
 		word_n = 0; //初始化当前文章单词数为0
 		
 		scanf("%s", word);//首先读入编号
 		strcpy(article[idx].id, word); //编号 
 		article[idx].num = idx+1 ; //序号
+		//printf("文章 %s(索引%d) 开始\n",article[idx].id,idx);
 		while(1) //持续读取单词 
 		{
 			word_len=readWord(word); //获取一个单词
-			if(word_len<=0)break; //如果遇到终止符则结束读取单词 
+			if(word_len<=0) break; //如果遇到终止符则结束读取单词 
 			if(!check(word)) continue; //无效单词则不管 
 			//有效单词的话
 			word_n++; //单词数+1
-			for(i=1;i<=m;i++)//检索是否为关键词 
+			for(i=0;i<m;i++)//检索是否为关键词 
 				if(strcmp(keyword[i], word) == 0) //如果匹配到了
 				{
 					article[idx].TN[i]++;
 					break;
 				} 
+			//printf("%s \n",word);
 		}//找完了全部单词 
 
 		article[idx].word_n=word_n; //记录单词数 
 		for(i=0;i<m;i++)//对每个关键词 
 		{
 			if(article[idx].TN[i]>0) DN[i]++; //出现过 
-			article[idx].TF[i] = (double)article[idx].TN[i]/(double)word_n*100.0; 
+			article[idx].TF[i] = (double)(article[idx].TN[i])/(double)word_n*100.0; 
 				//计算频数 
 		} 
-			
-		idx++;
+		//printf("文章 %s(索引%d)结束 终止符：%d\n",article[idx].id,idx,word_len); 
+		idx++; //考虑下一篇文章 
 		if(word_len==-1) 
 		{
 			N=idx;//文章总数
@@ -264,22 +289,58 @@ void article_analyse()
 	 
 } 
 
-void print_func()
+//打印结果 
+void print_res()
 {
-	int i,j;
-	for(i=0;i<res_n;i++)
+	int i;
+	FILE* fp;
+	//屏幕输出 
+	for(i=0;i<5;i++)
 		printf("%lf %d %s\n",article[i].sim,article[i].num,article[i].id);
-		
+	//txt输出 
+	fp = fopen("results.txt", "w");
+	for(i=0;i<res_n;i++)
+		fprintf(fp,"%lf %d %s\n",article[i].sim,article[i].num,article[i].id);
+	
 	//其他输出 
-	printf("N=%d,m=%d\n",N,m);
-	
-	for(i=0;i<m;i++)
-		printf("%s - DN:%d IDF:%lf\n",keyword[i],DN[i],IDF[i]);
-	for(i=0;i<N;i++)
-	{
-		printf("文章%d：",i+1);
-		for(j=0;j<m;j++) printf("%lf ",article[i].TF[j]);
-		printf("\n");
-	}
-	
+//	freopen("result_more.txt","w",stdout); //设置输出流 
+//	printf("N=%d,m=%d\n",N,m);
+//	for(i=0;i<m;i++)
+//		printf("%s - DN:%d IDF:%lf\n",keyword[i],DN[i],IDF[i]);
+//	for(i=0;i<N;i++)
+//	{
+//		//printf("文章%d：",i+1);
+//		show_info(article[i]);
+//	}
 }
+
+//展示文章信息 
+void show_info(struct ArticleInfo a)
+{
+	printf("id:%s\n",a.id);
+	printf("num:%d\n",a.num);
+	printf("word_n:%d\n",a.word_n);
+	int i;
+	printf("TN:\n");
+	for(i=0;i<m;i++) printf("%d ",a.TN[i]);
+	printf("\nTF:\n");
+	for(i=0;i<m;i++) printf("%lf ",a.TF[i]);
+	printf("\nsim:%lf\n\n",a.sim);
+} 
+
+//qsort的比较函数
+int cmp(const void* a,const void* b)
+{
+	struct ArticleInfo *sa,*sb;
+	sa = (struct ArticleInfo*)a;
+	sb = (struct ArticleInfo*)b;
+	double asim,bsim;
+	asim = sa->sim;
+	bsim = sb->sim;
+	if(bsim-asim>0) return 1;
+	else if(bsim-asim<0) return -1;
+	else 
+	{
+		return 0;
+	}
+} 
