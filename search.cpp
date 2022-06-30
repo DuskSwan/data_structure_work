@@ -303,15 +303,15 @@ void print_res()
 		fprintf(fp,"%lf %d %s\n",article[i].sim,article[i].num,article[i].id);
 	
 	//其他输出 
-//	freopen("result_more.txt","w",stdout); //设置输出流 
-//	printf("N=%d,m=%d\n",N,m);
-//	for(i=0;i<m;i++)
-//		printf("%s - DN:%d IDF:%lf\n",keyword[i],DN[i],IDF[i]);
-//	for(i=0;i<N;i++)
-//	{
-//		//printf("文章%d：",i+1);
-//		show_info(article[i]);
-//	}
+	freopen("result_more.txt","w",stdout); //设置输出流 
+	printf("N=%d,m=%d\n",N,m);
+	for(i=0;i<m;i++)
+		printf("%s - DN:%d IDF:%lf\n",keyword[i],DN[i],IDF[i]);
+	for(i=0;i<N;i++)
+	{
+		//printf("文章%d：",i+1);
+		show_info(article[i]);
+	}
 }
 
 //展示文章信息 

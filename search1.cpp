@@ -9,12 +9,6 @@
 #define article_MAX 2000 //最大文章/网页个数 
 #define id_MAX 100 //最大标识号长度 
 
-struct TN //记录单词k在文章d的频数，k与d体现在数组编号中 
-{
-	char w[WORD_MAXLEN];//单词 
-	int f;//频数 
-};
-
 struct ArticleInfo //记录单篇文章 
 {
 	char id[id_MAX]; //编号/标识号 
@@ -93,7 +87,6 @@ int main(int argc, char** argv) //argc是单词数目，argv是单词列
 	}
 
 	/***输出结果***/ 
-	int sz=sizeof(article)/sizeof(article[0]);
 	qsort(article,N,sizeof(article[0]),cmp);
 	print_res(); 
 	
@@ -340,7 +333,5 @@ int cmp(const void* a,const void* b)
 	if(bsim-asim>0) return 1;
 	else if(bsim-asim<0) return -1;
 	else 
-	{
-		return 0;
-	}
+		return (sa->num) - (sb->num);
 } 
