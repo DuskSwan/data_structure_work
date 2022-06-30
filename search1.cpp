@@ -1,3 +1,4 @@
+
 #include<stdio.h>
 #include<string.h>
 #include<ctype.h>
@@ -335,3 +336,4 @@ int cmp(const void* a,const void* b)
 	else 
 		return (sa->num) - (sb->num);
 } 
+
